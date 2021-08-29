@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="./css/index.css">
+</head>
+<body>
+
+<div class="container">
+    <div id="plot"></div>
+    <div class="controls">
+        <label>
+            <input type="checkbox" id="keepPreviousIteration">
+            Наложение итераций
+        </label>
+
+        <br>
+        <br>
+
+        <label>
+            <input id="iterationsSlider" type="range" min="0" max="12" value="4" step="1">
+            <span id="iterationsNumber">4</span>
+            <br>
+            Количество итераций
+        </label>
+    </div>
+</div>
+
+<script src="./js/plot.min.js"></script>
+<script src="./js/sierpinskiCurve.js"></script>
+</body>
+</html>
