@@ -46,7 +46,7 @@ function handler(size, maxIterations, keepIterations, plotter) {
     plotter.removeAll();
 
     if (keepIterations) {
-        for (let i = 0; i <= maxIterations; ++i) {
+        for (let i = 1; i <= maxIterations; ++i) {
             drawSierpinskiCurve(size, i, plotter);
         }
     } else {
