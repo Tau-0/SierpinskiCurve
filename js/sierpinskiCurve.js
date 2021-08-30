@@ -7,7 +7,7 @@ const iterationsText = document.getElementById("iterationsNumber");
 const stopButton = document.getElementById("stopButton");
 
 const BOX_SIZE = 10;
-const ITERATIONS_LIMIT = 12;
+const ITERATIONS_LIMIT = 14;
 
 const plotter = new Plotter("plot", {
     left: 0,
@@ -21,10 +21,10 @@ const plotter = new Plotter("plot", {
 const state = {
     size: BOX_SIZE,
     keepIterations: false,
-    differentColors: false,
+    useDifferentColors: false,
     useDelay: false,
     delay: 100,
-    iterationsNumber: 4,
+    totalIterations: 4,
     stop: false,
     plotter,
 };
@@ -39,16 +39,15 @@ slider.addEventListener("change", changeSlider);
 stopButton.addEventListener("click", stopButtonClick);
 
 function timer(state) {
-    const { stop, delay, useDelay } = state;
     return new Promise((resolve, reject) => {
-        if (stop) {
+        if (state.stop) {
             state.stop = false;
             disableControls(false);
             reject();
         }
 
-        if (useDelay) {
-            setTimeout(() => resolve(), delay)
+        if (state.useDelay) {
+            setTimeout(() => resolve(), state.delay)
         } else {
             resolve();
         }
@@ -61,7 +60,7 @@ function changeKeepPrevious(event) {
 }
 
 function changeColorsToggle(event) {
-    state.differentColors = event.target.checked;
+    state.useDifferentColors = event.target.checked;
     handler(state);
 }
 
@@ -74,39 +73,13 @@ function changeDelaySize(event) {
 }
 
 function changeSlider(event) {
-    state.iterationsNumber = parseInt(event.target.value);
-    iterationsText.innerHTML = state.iterationsNumber;
+    state.totalIterations = parseInt(event.target.value);
+    iterationsText.innerHTML = state.totalIterations;
     handler(state);
 }
 
 function stopButtonClick() {
     state.stop = true;
-}
-
-async function handler() {
-    const {
-        size,
-        iterationsNumber,
-        keepIterations,
-        plotter,
-    } = state;
-
-    plotter.removeAll();
-    state.stop = false;
-    disableControls();
-
-    if (keepIterations) {
-        for (let i = 1; i <= iterationsNumber; ++i) {
-            await drawSierpinskiCurve(size, i, state);
-            if (i !== iterationsNumber) {
-                await timer(state);
-            }
-        }
-    } else {
-        await drawSierpinskiCurve(size, iterationsNumber, state)
-    }
-
-    disableControls(false);
 }
 
 function disableControls(toggle = true) {
@@ -115,39 +88,54 @@ function disableControls(toggle = true) {
     slider.disabled = toggle;
 }
 
-async function drawSierpinskiCurve(size, maxIterations, state) {
-    const {plotter} = state;
+async function handler(state) {
+    state.plotter.removeAll();
+    state.stop = false;
+    disableControls();
+
+    if (state.keepIterations) {
+        for (let i = 1; i <= state.totalIterations; ++i) {
+            await drawSierpinskiCurve(state, i);
+            if (i !== state.totalIterations) {
+                await timer(state);
+            }
+        }
+    } else {
+        await drawSierpinskiCurve(state, state.totalIterations);
+    }
+
+    disableControls(false);
+}
+
+async function drawSierpinskiCurve(state, totalIterations) {
     let color = 0;
-    if (state.differentColors) {
-        color = maxIterations === ITERATIONS_LIMIT
-            ? 1
-            : (maxIterations - 1) * 2;
+    if (state.useDifferentColors) {
+        color = getColor(totalIterations);
     }
 
     const triangle1 = [
         {x: 0, y: 0},
-        {x: 0, y: size},
-        {x: size, y: size}
+        {x: 0, y: state.size},
+        {x: state.size, y: state.size}
     ];
 
     const triangle2 = [
-        {x: size, y: size},
-        {x: size, y: 0},
+        {x: state.size, y: state.size},
+        {x: state.size, y: 0},
         {x: 0, y: 0}
     ];
 
-    const half1 = getCurvePoints(triangle1, maxIterations);
-    const half2 = getCurvePoints(triangle2, maxIterations);
-    const points = [...half1, ...half2];
+    let points = getCurvePoints(triangle1, totalIterations);
+    points.push(...getCurvePoints(triangle2, totalIterations));
 
     for (let i = 0, j = 1; j < points.length; ++i, ++j) {
-        plotter
+        state.plotter
             .addLine(points[i].x, points[i].y, points[j].x, points[j].y)
             .setColor(color);
         await timer(state);
     }
 
-    plotter
+    state.plotter
         .addLine(points[0].x, points[0].y, points[points.length - 1].x, points[points.length - 1].y)
         .setColor(color);
 }
@@ -177,4 +165,25 @@ function getCurvePoints(triangle, currentIteration) {
     }
 
     return points;
+}
+
+const colors = {
+    1: "#1f77b4",
+    2: "#aec7e8",
+    3: "#ff7f0e",
+    4: "#ffbb78",
+    5: "#2ca02c",
+    6: "#98df8a",
+    7: "#d62728",
+    8: "#ff9896",
+    9: "#9467bd",
+    10: "#ff00ff",
+    11: "#ffff00",
+    12: "#ff0000",
+    13: "#0000ff",
+    14: "#000000",
+}
+
+function getColor(index) {
+    return colors[index];
 }
